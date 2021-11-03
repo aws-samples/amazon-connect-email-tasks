@@ -1,0 +1,93 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: CallBack Helper for Amazon Connect.
+
+Globals:
+  Function:
+    Timeout: 60
+    MemorySize: 128
+    Runtime: python3.8
+
+Resources:
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns: 
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        -
+          PolicyName: ConnectAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - connect:StartTaskContact
+                  - connect:StopContact
+                Resource: 
+                  - '*'
+        -
+          PolicyName: EmailSending
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - ses:SendEmail
+                Resource: 
+                  - '*'
+                  
+  emailReceptionTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: 'EmailDistribution'
+  
+  connectEmailTask:
+    Type: AWS::Serverless::Function 
+    Properties:
+      Role: !GetAtt LambdaRole.Arn
+      CodeUri: Connect-Email-Task/
+      Handler: lambda_function.lambda_handler
+      Environment: 
+        Variables:
+          CONTACT_FLOW_ID: 'REPLACE WITH CONNECT TASK CONTACT FLOW'
+          INSTANCE_ID: 'REPLACE WITH CONNECT INSTANCE ID'
+      Events:
+        emailReception:
+          Type: SNS
+          Properties:
+            Topic: !Ref emailReceptionTopic
+  connectEmailReply:
+    Type: AWS::Serverless::Function
+    Properties:
+      Role: !GetAtt LambdaRole.Arn
+      CodeUri: Connect-Email-Reply/
+      Handler: lambda_function.lambda_handler
+      Environment:
+        Variables:
+          SOURCE_EMAIL: 'REPLACE WITH SOURCE EMAIL'
+
+
+Outputs:
+  connectEmailTask:
+    Description: "Email to Task Function"
+    Value: !GetAtt connectEmailTask.Arn
+  connectEmailReply:
+    Description: " Task reply to Email Function"
+    Value: !GetAtt connectEmailReply.Arn
+  emailReceptionTopic:
+    Description: "Email reception SNS topic"
+    Value: !GetAtt emailReceptionTopic.TopicName
+
+  
