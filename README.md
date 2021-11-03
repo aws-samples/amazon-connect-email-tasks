@@ -18,7 +18,7 @@ The project includes a cloud formation template with a Serverless Application Mo
 ## Prerequisites.
 1. Amazon Connect Instance already set up with contact flow for handling tasks. Incoming emails will generate a new task with subject, source and content.
 2. AWS Console Access with administrator account.
-3. Cloud9 IDE or AWS and SAM tools installed and properly configured with administrator credentials.
+3. Cloud9 IDE or AWS CLI and SAM tools installed and properly configured with administrator credentials.
 
 ## Deploy the solution
 1. Clone this repo.
