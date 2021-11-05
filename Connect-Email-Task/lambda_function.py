@@ -34,13 +34,13 @@ def lambda_handler(event, context):
 
             str_base64_content = email_message["text/plain"]
             base64_content = str_base64_content.encode('ascii')
+
             try:
                 message_bytes = base64.b64decode(base64_content)
+                message = message_bytes.decode('UTF-8')
             except Exception as e:
                 message = str(email_message["text/plain"])
-            else:
-                message = message_bytes.decode('utf-8')
-    
+
             print("Received message: " + message)
             start_task(source,subject,message)
             response['body']=json.dumps('Message processed')
