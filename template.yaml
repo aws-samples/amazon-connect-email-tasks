@@ -48,10 +48,43 @@ Resources:
                 Resource: 
                   - '*'
                   
+  encryptionkey:
+    Type: AWS::KMS::Key
+    Properties: 
+      Description: CallBack Helper Secrets Key
+      Enabled: True
+      EnableKeyRotation: True
+      KeySpec: SYMMETRIC_DEFAULT
+      KeyPolicy:
+        Version: 2012-10-17
+        Statement:
+          - Sid: "Enable IAM User Permissions"
+            Effect: "Allow"
+            Principal: 
+              AWS:
+                Fn::Join: 
+                - ""
+                - 
+                  - "arn:aws:iam::"
+                  - Ref: "AWS::AccountId"
+                  - ":root"
+            Action: 'kms:*'
+            Resource: '*'
+          - Sid: "Enable Services Access"
+            Effect: "Allow"
+            Principal: 
+              Service:
+                - 'ses.amazonaws.com'
+            Action:
+              - 'kms:GenerateDataKey*'
+              - 'kms:Decrypt'
+            Resource: '*'
+            
   emailReceptionTopic:
     Type: AWS::SNS::Topic
     Properties:
       DisplayName: 'EmailDistribution'
+      KmsMasterKeyId: !Ref encryptionkey
   
   connectEmailTask:
     Type: AWS::Serverless::Function 
@@ -89,5 +122,3 @@ Outputs:
   emailReceptionTopic:
     Description: "Email reception SNS topic"
     Value: !GetAtt emailReceptionTopic.TopicName
-
-  
